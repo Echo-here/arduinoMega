@@ -1,52 +1,45 @@
 #include <Servo.h>
+Servo sv;
 
-const int ldrPin = 2;        // 디지털 조도 센서 DO → D2 핀
-const int servoPin = 5;      // 서보 PWM 신호 → D5
-bool lightDetected = false;
-
-Servo myservo;
+const int D0 = 2;
+const int svp = 5;
 
 void setup() {
-  Serial.begin(9600);        // 시리얼 시작 필수!
-  pinMode(ldrPin, INPUT);
-  myservo.attach(servoPin);
-  myservo.write(0);          // 서보 시작 위치
-}
+  Serial.begin(9600);
+  pinMode(D0, INPUT);
+
+  sv.attach(svp);
+  sv.write(0);
+  delay(1000);
+  }
 
 void loop() {
-  int light = digitalRead(ldrPin);  // 0 or 1 출력
+  int cds_state = digitalRead(D0);
 
-  Serial.print("조도 센서 상태: "); Serial.println(light);  // 상태 확인용
-
-  // 빛 감지 조건 (필요시 반대로 바꿔야 함)
-  if (light == LOW) {  // 보통 LOW가 빛 감지인 경우가 많음
-    if (!lightDetected) {
-      Serial.println("빛 감지됨");
-      lightDetected = true;
-    }
+  //상태 확인(잘나옴)
+  if (cds_state == HIGH) {
+    Serial.println("HIGH");
   } else {
-    lightDetected = false;
+    Serial.println("LOW");
   }
 
-  if (Serial.available()) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
-    Serial.print("받은 명령: "); Serial.println(cmd);
+//서브모터 UART 제어 확인(잘됨)
+if (Serial.available()) {
+  char receivedChar = Serial.read();
 
-    if (lightDetected) {
-      if (cmd == "open") {
-        myservo.write(90);
-        Serial.println("서보: 열림");
-      } else if (cmd == "close") {
-        myservo.write(0);
-        Serial.println("서보: 닫힘");
-      } else {
-        Serial.println("알 수 없는 명령");
-      }
-    } else {
-      Serial.println("⚠ 조도 조건 미달 - 명령 무시됨");
-    }
+  if (receivedChar == '1') {
+    sv.write(90); //시리얼에 1 넣으면 90도로 회전
+  } else {
+    sv.write(0); //다른값 들어오면 0도로 복귀
   }
-
+  while(Serial.available()) {
+    Serial.read();
+  }
+}
   delay(200);
+
+  //모터 확인(잘됨)
+  // sv.write(180);
+  // delay(1000);
+  // sv.write(0);
 }
